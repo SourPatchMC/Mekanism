@@ -1,30 +1,34 @@
-build
-output
-.idea
+# brachyura
+.brachyura
+build/
+*.jfr
+
+# idea
+
+.idea/
 *.iml
 *.ipr
 *.iws
-out
 
-Mekanism*.jar
-MDK.zip
-/run
-/runGameTests
-/.gradle
-*.classpath
-*.project
-.settings
-/eclipse
-*.txt
+# vscode
+
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+
+# eclipse
+
 *.launch
 
-*.blend1
-*.blend2
-/bin
-/logs
-/src/datagen/*/resources
-/src/datagen/*/annotation_generated
-!/src/datagen/main/resources/PersistingMekanismDatagenCache.js
-!/src/datagen/main/resources/META-INF/coremods.json
-/annotation-processor/bin
-libs/
+# fabric
+
+run/
+/logs/latest.log
+
+# macOS
+
+.DS_Store
+.AppleDouble
+.LSOverride
