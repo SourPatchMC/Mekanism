@@ -1,5 +1,6 @@
 package mekanism.api.energy;
 
+import io.github.fabricators_of_create.porting_lib.extensions.extensions.INBTSerializable;
 import mekanism.api.Action;
 import mekanism.api.AutomationType;
 import mekanism.api.IContentsListener;
@@ -7,7 +8,6 @@ import mekanism.api.NBTConstants;
 import mekanism.api.annotations.NothingNullByDefault;
 import mekanism.api.math.FloatingLong;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraftforge.common.util.INBTSerializable;
 
 @NothingNullByDefault
 public interface IEnergyContainer extends INBTSerializable<CompoundTag>, IContentsListener {

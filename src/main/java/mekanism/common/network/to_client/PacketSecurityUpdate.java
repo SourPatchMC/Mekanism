@@ -12,8 +12,8 @@ import mekanism.common.lib.security.SecurityFrequency;
 import mekanism.common.network.BasePacketHandler;
 import mekanism.common.network.IMekanismPacket;
 import mekanism.common.util.MekanismUtils;
+import mekanism.quilt.NetworkContext;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.Nullable;
 
 public class PacketSecurityUpdate implements IMekanismPacket {
@@ -48,7 +48,7 @@ public class PacketSecurityUpdate implements IMekanismPacket {
     }
 
     @Override
-    public void handle(NetworkEvent.Context context) {
+    public void handle(NetworkContext context) {
         if (isUpdate) {
             MekanismClient.clientUUIDMap.put(playerUUID, playerUsername);
             if (securityData != null) {

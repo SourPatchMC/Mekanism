@@ -1,7 +1,6 @@
 package mekanism.common.config;
 
-import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.ModLoadingContext;
+import org.quiltmc.loader.api.ModContainer;
 
 public class MekanismConfig {
 
@@ -17,8 +16,7 @@ public class MekanismConfig {
     public static final UsageConfig usage = new UsageConfig();
     public static final WorldConfig world = new WorldConfig();
 
-    public static void registerConfigs(ModLoadingContext modLoadingContext) {
-        ModContainer modContainer = modLoadingContext.getActiveContainer();
+    public static void registerConfigs(ModContainer modContainer) {
         MekanismConfigHelper.registerConfig(modContainer, client);
         MekanismConfigHelper.registerConfig(modContainer, common);
         MekanismConfigHelper.registerConfig(modContainer, general);

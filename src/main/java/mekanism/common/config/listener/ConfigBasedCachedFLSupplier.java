@@ -1,9 +1,9 @@
 package mekanism.common.config.listener;
 
+import io.github.fabricators_of_create.porting_lib.common.util.NonNullSupplier;
 import mekanism.api.math.FloatingLong;
 import mekanism.api.math.FloatingLongSupplier;
 import mekanism.common.config.value.CachedValue;
-import net.minecraftforge.common.util.NonNullSupplier;
 
 public class ConfigBasedCachedFLSupplier extends ConfigBasedCachedSupplier<FloatingLong> implements FloatingLongSupplier {
 

@@ -4,6 +4,7 @@ import mekanism.api.functions.FloatSupplier;
 import mekanism.common.config.IMekanismConfig;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 
+//TODO: is the other todo still needed for the forge config port?
 //TODO: Once https://github.com/MinecraftForge/MinecraftForge/pull/6464 is merged make this extend CachedPrimitiveValue<Float>
 // and make it so that our get is cleaner
 public class CachedFloatValue extends CachedValue<Double> implements FloatSupplier {

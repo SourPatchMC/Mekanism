@@ -1,7 +1,6 @@
 package mekanism.common.lib;
 
-import net.minecraftforge.fml.ModContainer;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.quiltmc.loader.api.ModContainer;
 
 /**
  * Version v2.0.0. Simple version handling for Mekanism.
@@ -43,15 +42,15 @@ public class Version {
      *
      * @implNote We don't currently include the artifact version's build number as we classify our version by major, minor, build
      */
-    public Version(ArtifactVersion artifactVersion) {
-        this(artifactVersion.getMajorVersion(), artifactVersion.getMinorVersion(), artifactVersion.getIncrementalVersion());
+    public Version(org.quiltmc.loader.api.Version.Semantic version) {
+        this(version.major(), version.minor(), version.patch());
     }
 
     /**
      * Helper to make it so this is the only class with weird errors in IntelliJ (that don't actually exist), instead of having our main class also have "errors"
      */
     public Version(ModContainer container) {
-        this(container.getModInfo().getVersion());
+        this(container.metadata().version().semantic());
     }
 
     /**

@@ -13,10 +13,10 @@ import mekanism.common.network.IMekanismPacket;
 import mekanism.common.tile.transmitter.TileEntityLogisticalTransporterBase;
 import mekanism.common.util.EnumUtils;
 import mekanism.common.util.WorldUtils;
+import mekanism.quilt.NetworkContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 
 public class PacketTransporterUpdate implements IMekanismPacket {
 
@@ -64,7 +64,7 @@ public class PacketTransporterUpdate implements IMekanismPacket {
     }
 
     @Override
-    public void handle(NetworkEvent.Context context) {
+    public void handle(NetworkContext context) {
         TileEntityLogisticalTransporterBase tile = WorldUtils.getTileEntity(TileEntityLogisticalTransporterBase.class, Minecraft.getInstance().level, pos);
         if (tile != null) {
             LogisticalTransporterBase transporter = tile.getTransmitter();

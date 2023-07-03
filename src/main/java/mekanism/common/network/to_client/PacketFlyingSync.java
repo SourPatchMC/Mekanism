@@ -1,10 +1,10 @@
 package mekanism.common.network.to_client;
 
 import mekanism.common.network.IMekanismPacket;
+import mekanism.quilt.NetworkContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 
 public class PacketFlyingSync implements IMekanismPacket {
 
@@ -17,7 +17,7 @@ public class PacketFlyingSync implements IMekanismPacket {
     }
 
     @Override
-    public void handle(NetworkEvent.Context context) {
+    public void handle(NetworkContext context) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
             player.getAbilities().mayfly = allowFlying;

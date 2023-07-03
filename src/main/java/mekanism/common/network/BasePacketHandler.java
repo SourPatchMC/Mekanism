@@ -1,7 +1,6 @@
 package mekanism.common.network;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -12,7 +11,6 @@ import mekanism.common.lib.Version;
 import mekanism.common.lib.math.Range3D;
 import mekanism.common.lib.transmitter.DynamicBufferedNetwork;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -25,23 +23,20 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
-import net.minecraftforge.server.ServerLifecycleHooks;
 import org.jetbrains.annotations.Nullable;
+import org.quiltmc.qsl.networking.api.PlayerLookup;
+
+import io.github.fabricators_of_create.porting_lib.fake_players.FakePlayer;
+import io.github.fabricators_of_create.porting_lib.util.ServerLifecycleHooks;
+import me.pepperbell.simplenetworking.C2SPacket;
+import me.pepperbell.simplenetworking.S2CPacket;
+import me.pepperbell.simplenetworking.SimpleChannel;
+import me.pepperbell.simplenetworking.SimpleNetworking;
 
 public abstract class BasePacketHandler {
 
     protected static SimpleChannel createChannel(ResourceLocation name, Version version) {
-        String protocolVersion = version.toString();
-        return NetworkRegistry.ChannelBuilder.named(name)
-              .clientAcceptedVersions(protocolVersion::equals)
-              .serverAcceptedVersions(protocolVersion::equals)
-              .networkProtocolVersion(() -> protocolVersion)
-              .simpleChannel();
+        return new SimpleChannel(name);
     }
 
     /**
@@ -122,16 +117,17 @@ public abstract class BasePacketHandler {
     public abstract void initialize();
 
     protected <MSG extends IMekanismPacket> void registerClientToServer(Class<MSG> type, Function<FriendlyByteBuf, MSG> decoder) {
-        registerMessage(type, decoder, NetworkDirection.PLAY_TO_SERVER);
+        getChannel().registerC2SPacket(type, index++, decoder);
     }
 
     protected <MSG extends IMekanismPacket> void registerServerToClient(Class<MSG> type, Function<FriendlyByteBuf, MSG> decoder) {
-        registerMessage(type, decoder, NetworkDirection.PLAY_TO_CLIENT);
+        getChannel().registerS2CPacket(type, index++, decoder);
     }
 
-    private <MSG extends IMekanismPacket> void registerMessage(Class<MSG> type, Function<FriendlyByteBuf, MSG> decoder, NetworkDirection networkDirection) {
-        getChannel().registerMessage(index++, type, IMekanismPacket::encode, decoder, IMekanismPacket::handle, Optional.of(networkDirection));
-    }
+    // Quilt: this isn't needed
+    // private <MSG extends IMekanismPacket> void registerMessage(Class<MSG> type, Function<FriendlyByteBuf, MSG> decoder, NetworkDirection networkDirection) {
+    //     getChannel().registerMessage(index++, type, IMekanismPacket::encode, decoder, IMekanismPacket::handle, Optional.of(networkDirection));
+    // }
 
     /**
      * Send this message to the specified player.
@@ -139,10 +135,10 @@ public abstract class BasePacketHandler {
      * @param message - the message to send
      * @param player  - the player to send it to
      */
-    public <MSG> void sendTo(MSG message, ServerPlayer player) {
+    public <MSG extends S2CPacket> void sendTo(MSG message, ServerPlayer player) {
         //Validate it is not a fake player, even though none of our code should call this with a fake player
         if (!(player instanceof FakePlayer)) {
-            getChannel().send(PacketDistributor.PLAYER.with(() -> player), message);
+            getChannel().sendToClient(message, player);
         }
     }
 
@@ -151,8 +147,8 @@ public abstract class BasePacketHandler {
      *
      * @param message - message to send
      */
-    public <MSG> void sendToAll(MSG message) {
-        getChannel().send(PacketDistributor.ALL.noArg(), message);
+    public <MSG extends S2CPacket> void sendToAll(MSG message) {
+        getChannel().sendToClientsInCurrentServer(message);
     }
 
     /**
@@ -162,7 +158,7 @@ public abstract class BasePacketHandler {
      *
      * @apiNote This is useful for reload listeners
      */
-    public <MSG> void sendToAllIfLoaded(MSG message) {
+    public <MSG extends S2CPacket> void sendToAllIfLoaded(MSG message) {
         if (ServerLifecycleHooks.getCurrentServer() != null) {
             //If the server has loaded, send to all players
             sendToAll(message);
@@ -175,8 +171,10 @@ public abstract class BasePacketHandler {
      * @param message   - the message to send
      * @param dimension - the dimension to target
      */
-    public <MSG> void sendToDimension(MSG message, ResourceKey<Level> dimension) {
-        getChannel().send(PacketDistributor.DIMENSION.with(() -> dimension), message);
+    public <MSG extends S2CPacket> void sendToDimension(MSG message, ResourceKey<Level> dimension) {
+        PlayerLookup.all(SimpleNetworking.getCurrentServer()).forEach(player -> {
+            if (player.level().dimension() == dimension) getChannel().sendToClient(message, player);
+        });
     }
 
     /**
@@ -184,34 +182,35 @@ public abstract class BasePacketHandler {
      *
      * @param message - the message to send
      */
-    public <MSG> void sendToServer(MSG message) {
+    public <MSG extends C2SPacket> void sendToServer(MSG message) {
         getChannel().sendToServer(message);
     }
 
-    public <MSG> void sendToAllTracking(MSG message, Entity entity) {
-        getChannel().send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), message);
+    public <MSG extends S2CPacket> void sendToAllTracking(MSG message, Entity entity) {
+        getChannel().sendToClientsTracking(message, entity);
     }
 
-    public <MSG> void sendToAllTrackingAndSelf(MSG message, Entity entity) {
-        getChannel().send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), message);
+    public <MSG extends S2CPacket> void sendToAllTrackingAndSelf(MSG message, Entity entity) {
+        getChannel().sendToClientsTrackingAndSelf(message, entity);
     }
 
-    public <MSG> void sendToAllTracking(MSG message, BlockEntity tile) {
-        sendToAllTracking(message, tile.getLevel(), tile.getBlockPos());
+    public <MSG extends S2CPacket> void sendToAllTracking(MSG message, BlockEntity tile) {
+        getChannel().sendToClientsTracking(message, tile);
     }
 
-    public <MSG> void sendToAllTracking(MSG message, Level world, BlockPos pos) {
+    public <MSG extends S2CPacket> void sendToAllTracking(MSG message, Level world, BlockPos pos) {
         if (world instanceof ServerLevel level) {
             //If we have a ServerWorld just directly figure out the ChunkPos to not require looking up the chunk
             // This provides a decent performance boost over using the packet distributor
-            level.getChunkSource().chunkMap.getPlayers(new ChunkPos(pos), false).forEach(p -> sendTo(message, p));
-        } else {
-            //Otherwise, fallback to entities tracking the chunk if some mod did something odd and our world is not a ServerWorld
-            getChannel().send(PacketDistributor.TRACKING_CHUNK.with(() -> world.getChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()))), message);
+            getChannel().sendToClientsTracking(message, level, new ChunkPos(pos));
         }
+        // Quilt: the level should never be anything other than an server level
+        // } else {
+        //     //Otherwise, fallback to entities tracking the chunk if some mod did something odd and our world is not a ServerWorld
+        // }
     }
 
-    public <MSG> void sendToReceivers(MSG message, DynamicBufferedNetwork<?, ?, ?, ?> network) {
+    public <MSG extends S2CPacket> void sendToReceivers(MSG message, DynamicBufferedNetwork<?, ?, ?, ?> network) {
         //TODO: Figure out why we have a try catch and remove the need for it
         try {
             //TODO: Create a method in DynamicNetwork to get all players that are "tracking" the network

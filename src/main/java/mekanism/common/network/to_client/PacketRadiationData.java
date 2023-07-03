@@ -4,10 +4,10 @@ import mekanism.common.capabilities.Capabilities;
 import mekanism.common.lib.radiation.RadiationManager;
 import mekanism.common.lib.radiation.RadiationManager.LevelAndMaxMagnitude;
 import mekanism.common.network.IMekanismPacket;
+import mekanism.quilt.NetworkContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 
 public class PacketRadiationData implements IMekanismPacket {
 
@@ -30,7 +30,7 @@ public class PacketRadiationData implements IMekanismPacket {
     }
 
     @Override
-    public void handle(NetworkEvent.Context context) {
+    public void handle(NetworkContext context) {
         if (type == RadiationPacketType.ENVIRONMENTAL) {
             RadiationManager.INSTANCE.setClientEnvironmentalRadiation(radiation, maxMagnitude);
         } else if (type == RadiationPacketType.PLAYER) {

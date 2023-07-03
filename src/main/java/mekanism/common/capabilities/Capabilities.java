@@ -1,5 +1,7 @@
 package mekanism.common.capabilities;
 
+import dev.onyxstudios.cca.api.v3.component.ComponentKey;
+import dev.onyxstudios.cca.api.v3.component.ComponentRegistry;
 import mekanism.api.IAlloyInteraction;
 import mekanism.api.IConfigCardAccess;
 import mekanism.api.IConfigurable;
@@ -16,40 +18,39 @@ import mekanism.api.radiation.capability.IRadiationEntity;
 import mekanism.api.radiation.capability.IRadiationShielding;
 import mekanism.api.security.IOwnerObject;
 import mekanism.api.security.ISecurityObject;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
+import mekanism.common.Mekanism;
+import mekanism.quilt.capability.CapabilityComponents;
 
 public class Capabilities {
 
     private Capabilities() {
     }
 
-    public static final Capability<IGasHandler> GAS_HANDLER = CapabilityManager.get(new CapabilityToken<>() {});
-    public static final Capability<IInfusionHandler> INFUSION_HANDLER = CapabilityManager.get(new CapabilityToken<>() {});
-    public static final Capability<IPigmentHandler> PIGMENT_HANDLER = CapabilityManager.get(new CapabilityToken<>() {});
-    public static final Capability<ISlurryHandler> SLURRY_HANDLER = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IGasHandler> GAS_HANDLER = ComponentRegistry.getOrCreate(Mekanism.rl("gas_handler"));
+    public static final ComponentKey<IInfusionHandler> INFUSION_HANDLER = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IPigmentHandler> PIGMENT_HANDLER = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<ISlurryHandler> SLURRY_HANDLER = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<IHeatHandler> HEAT_HANDLER = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IHeatHandler> HEAT_HANDLER = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<IStrictEnergyHandler> STRICT_ENERGY = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IStrictEnergyHandler> STRICT_ENERGY = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<IConfigurable> CONFIGURABLE = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IConfigurable> CONFIGURABLE = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<IAlloyInteraction> ALLOY_INTERACTION = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IAlloyInteraction> ALLOY_INTERACTION = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<IConfigCardAccess> CONFIG_CARD = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IConfigCardAccess> CONFIG_CARD = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<IEvaporationSolar> EVAPORATION_SOLAR = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IEvaporationSolar> EVAPORATION_SOLAR = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<ILaserReceptor> LASER_RECEPTOR = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<ILaserReceptor> LASER_RECEPTOR = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<ILaserDissipation> LASER_DISSIPATION = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<ILaserDissipation> LASER_DISSIPATION = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<IRadiationShielding> RADIATION_SHIELDING = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IRadiationShielding> RADIATION_SHIELDING = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<IRadiationEntity> RADIATION_ENTITY = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IRadiationEntity> RADIATION_ENTITY = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static final Capability<IOwnerObject> OWNER_OBJECT = CapabilityManager.get(new CapabilityToken<>() {});
-    public static final Capability<ISecurityObject> SECURITY_OBJECT = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<IOwnerObject> OWNER_OBJECT = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final ComponentKey<ISecurityObject> SECURITY_OBJECT = CapabilityManager.get(new CapabilityToken<>() {});
 }

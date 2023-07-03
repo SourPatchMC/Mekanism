@@ -20,6 +20,7 @@ import mekanism.common.util.WorldUtils;
 import mekanism.common.world.GenHandler;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -29,19 +30,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.event.TickEvent.LevelTickEvent;
-import net.minecraftforge.event.TickEvent.Phase;
-import net.minecraftforge.event.TickEvent.ServerTickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.event.level.ChunkDataEvent;
-import net.minecraftforge.event.level.ChunkEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraft.world.level.chunk.LevelChunk;
+
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.MixinEnvironment.Phase;
+
+import io.github.fabricators_of_create.porting_lib.event.common.BlockEvents;
 
 public class CommonWorldTickHandler {
 
@@ -49,7 +46,7 @@ public class CommonWorldTickHandler {
 
     //TODO: I believe this may be fine as is with just the load and save methods being synchronized
     // but there is a chance this is not the case in which case we should adjust how this is done
-    private Map<ResourceLocation, Object2IntMap<ChunkPos>> chunkVersions;
+    public Map<ResourceLocation, Object2IntMap<ChunkPos>> chunkVersions;
     private Map<ResourceLocation, Queue<ChunkPos>> chunkRegenMap;
     public static boolean flushTagAndRecipeCaches;
     public static boolean monitoringCardboardBox;
@@ -78,35 +75,33 @@ public class CommonWorldTickHandler {
         chunkVersions = null;
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onEntitySpawn(EntityJoinLevelEvent event) {
+    public void onEntitySpawn(Entity entity, ServerLevel level) {
         //If we are in the middle of breaking a block using a cardboard box, cancel any items
         // that are dropped, we do this at highest priority to ensure we cancel it the same tick
         // before forge replaces items with custom item entities with a tick delay
         // We also cancel any experience orbs from spawning as things like the furnace will store
         // how much xp they have but also try to drop it on replace
+        // TODO: Quilt: do we need to cancel?
         if (monitoringCardboardBox) {
-            Entity entity = event.getEntity();
             if (entity instanceof ItemEntity || entity instanceof ExperienceOrb) {
                 entity.discard();
-                event.setCanceled(true);
+                // event.setCanceled(true);
             }
-        } else if (fallbackItemCollector != null && event.getEntity() instanceof ItemEntity entity && fallbackItemCollector.test(entity.getItem())) {
+        } else if (fallbackItemCollector != null && entity instanceof ItemEntity itemEntity && fallbackItemCollector.test(itemEntity.getItem())) {
             //If we have a fallback item collector active and the entity that is being added is an item,
             // try to let our fallback collector handle the item and keep track of it instead of actually adding it to the world
             entity.discard();
-            event.setCanceled(true);
+            // event.setCanceled(true);
         }
     }
 
-    @SubscribeEvent
-    public void onBlockBreak(BlockEvent.BreakEvent event) {
+    public void onBlockBreak(BlockEvents.BreakEvent event) {
         BlockState state = event.getState();
         //Skip empty block, shouldn't be a null state but the BreakEvent still handles that as the empty block,
         // so we need to skip handling it that way, AND skip and blocks that can never have a block entity
         if (state != null && !state.isAir() && state.hasBlockEntity()) {
             //If the block might have a block entity, look it up from the world and see if the player has access to destroy it
-            BlockEntity blockEntity = WorldUtils.getTileEntity(event.getLevel(), event.getPos());
+            BlockEntity blockEntity = WorldUtils.getTileEntity(event.getWorld(), event.getPos());
             if (!MekanismAPI.getSecurityUtils().canAccess(event.getPlayer(), blockEntity)) {
                 //If they don't because it is something that is locked, then cancel the event
                 event.setCanceled(true);
@@ -114,81 +109,83 @@ public class CommonWorldTickHandler {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public synchronized void chunkSave(ChunkDataEvent.Save event) {
-        LevelAccessor world = event.getLevel();
-        if (!world.isClientSide() && world instanceof Level level) {
-            int chunkVersion = MekanismConfig.world.userGenVersion.get();
-            if (chunkVersions != null) {
-                chunkVersion = chunkVersions.getOrDefault(level.dimension().location(), Object2IntMaps.emptyMap())
-                      .getOrDefault(event.getChunk().getPos(), chunkVersion);
-            }
-            event.getData().putInt(NBTConstants.WORLD_GEN_VERSION, chunkVersion);
-        }
-    }
+    // Quilt replaced with CCA
+    // @SubscribeEvent(priority = EventPriority.HIGHEST)
+    // public synchronized void chunkSave(ChunkDataEvent.Save event) {
+    //     LevelAccessor world = event.getLevel();
+    //     if (!world.isClientSide() && world instanceof Level level) {
+    //         int chunkVersion = MekanismConfig.world.userGenVersion.get();
+    //         if (chunkVersions != null) {
+    //             chunkVersion = chunkVersions.getOrDefault(level.dimension().location(), Object2IntMaps.emptyMap())
+    //                   .getOrDefault(event.getChunk().getPos(), chunkVersion);
+    //         }
+    //         event.getData().putInt(NBTConstants.WORLD_GEN_VERSION, chunkVersion);
+    //     }
+    // }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public synchronized void onChunkDataLoad(ChunkDataEvent.Load event) {
-        if (event.getLevel() instanceof Level level && !level.isClientSide()) {
-            int version = event.getData().getInt(NBTConstants.WORLD_GEN_VERSION);
-            //When a chunk is loaded, if it has an older version than the latest one
-            if (version < MekanismConfig.world.userGenVersion.get()) {
-                //Track what version it has so that when we save it, if we haven't gotten a chance to update
-                // the chunk yet, then we are able to properly save that we still will need to update it
-                if (chunkVersions == null) {
-                    chunkVersions = new Object2ObjectArrayMap<>();
-                }
-                ChunkPos chunkCoord = event.getChunk().getPos();
-                ResourceKey<Level> dimension = level.dimension();
-                chunkVersions.computeIfAbsent(dimension.location(), dim -> new Object2IntOpenHashMap<>())
-                      .put(chunkCoord, version);
-                if (MekanismConfig.world.enableRegeneration.get()) {
-                    //If retrogen is enabled, then we also need to mark the chunk as needing retrogen
-                    addRegenChunk(dimension, chunkCoord);
-                }
-            }
-        }
-    }
+    // @SubscribeEvent(priority = EventPriority.HIGHEST)
+    // public synchronized void onChunkDataLoad(ChunkDataEvent.Load event) {
+    //     if (event.getLevel() instanceof Level level && !level.isClientSide()) {
+    //         int version = event.getData().getInt(NBTConstants.WORLD_GEN_VERSION);
+    //         //When a chunk is loaded, if it has an older version than the latest one
+    //         if (version < MekanismConfig.world.userGenVersion.get()) {
+    //             //Track what version it has so that when we save it, if we haven't gotten a chance to update
+    //             // the chunk yet, then we are able to properly save that we still will need to update it
+    //             if (chunkVersions == null) {
+    //                 chunkVersions = new Object2ObjectArrayMap<>();
+    //             }
+    //             ChunkPos chunkCoord = event.getChunk().getPos();
+    //             ResourceKey<Level> dimension = level.dimension();
+    //             chunkVersions.computeIfAbsent(dimension.location(), dim -> new Object2IntOpenHashMap<>())
+    //                   .put(chunkCoord, version);
+    //             if (MekanismConfig.world.enableRegeneration.get()) {
+    //                 //If retrogen is enabled, then we also need to mark the chunk as needing retrogen
+    //                 addRegenChunk(dimension, chunkCoord);
+    //             }
+    //         }
+    //     }
+    // }
 
-    @SubscribeEvent
-    public void chunkUnloadEvent(ChunkEvent.Unload event) {
-        if (event.getLevel() instanceof Level level && !level.isClientSide() && chunkVersions != null) {
+    public void chunkUnloadEvent(ServerLevel level, LevelChunk chunk) {
+        // Quilt: these checks aren't needed
+        // if (event.getLevel() instanceof Level level && !level.isClientSide() && chunkVersions != null) {
+        if (chunkVersions != null) {
             //When a chunk unloads, free up the memory tracking what version it has
             chunkVersions.getOrDefault(level.dimension().location(), Object2IntMaps.emptyMap())
-                  .removeInt(event.getChunk().getPos());
+                  .removeInt(chunk.getPos());
         }
     }
 
-    @SubscribeEvent
-    public void worldUnloadEvent(LevelEvent.Unload event) {
-        LevelAccessor world = event.getLevel();
-        if (!world.isClientSide() && world instanceof Level level && chunkVersions != null) {
+    public void worldUnloadEvent(MinecraftServer server, ServerLevel level) {
+        // Quilt: these checks aren't needed
+        // if (!world.isClientSide() && world instanceof Level level && chunkVersions != null) {
+        if (chunkVersions != null) {
             //When a world unloads, free up memory tracking the versions of the chunks in it
             chunkVersions.remove(level.dimension().location());
         }
     }
 
-    @SubscribeEvent
-    public void worldLoadEvent(LevelEvent.Load event) {
-        if (!event.getLevel().isClientSide()) {
+    public void worldLoadEvent(MinecraftServer server, ServerLevel level) {
+        // Quilt: these checks aren't needed
+        // if (!event.getLevel().isClientSide()) {
             FrequencyManager.load();
             QIOGlobalItemLookup.INSTANCE.createOrLoad();
             RadiationManager.INSTANCE.createOrLoad();
-        }
+        // }
     }
 
-    @SubscribeEvent
-    public void onTick(ServerTickEvent event) {
-        if (event.side.isServer() && event.phase == Phase.END) {
+    public void onTick(MinecraftServer server) {
+        // Quilt: these checks aren't needed
+        // if (event.side.isServer() && event.phase == Phase.END) {
             serverTick();
-        }
+        // }
     }
 
-    @SubscribeEvent
-    public void onTick(LevelTickEvent event) {
-        if (event.side.isServer() && event.phase == Phase.END) {
-            tickEnd((ServerLevel) event.level);
-        }
+    public void onTick(MinecraftServer server, ServerLevel level) {
+        // Quilt: these checks aren't needed
+        // if (event.side.isServer() && event.phase == Phase.END) {
+            tickEnd(level);
+        // }
     }
 
     private void serverTick() {

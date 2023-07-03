@@ -5,10 +5,10 @@ import java.util.List;
 import mekanism.common.inventory.container.MekanismContainer;
 import mekanism.common.network.IMekanismPacket;
 import mekanism.common.network.to_client.container.property.PropertyData;
+import mekanism.quilt.NetworkContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 
 public class PacketUpdateContainer implements IMekanismPacket {
 
@@ -22,7 +22,7 @@ public class PacketUpdateContainer implements IMekanismPacket {
     }
 
     @Override
-    public void handle(NetworkEvent.Context context) {
+    public void handle(NetworkContext context) {
         LocalPlayer player = Minecraft.getInstance().player;
         //Ensure that the container is one of ours and that the window id is the same as we expect it to be
         if (player != null && player.containerMenu instanceof MekanismContainer container && container.containerId == windowId) {

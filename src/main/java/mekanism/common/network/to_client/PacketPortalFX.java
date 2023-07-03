@@ -1,13 +1,13 @@
 package mekanism.common.network.to_client;
 
 import mekanism.common.network.IMekanismPacket;
+import mekanism.quilt.NetworkContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 
 public class PacketPortalFX implements IMekanismPacket {
 
@@ -24,7 +24,7 @@ public class PacketPortalFX implements IMekanismPacket {
     }
 
     @Override
-    public void handle(NetworkEvent.Context context) {
+    public void handle(NetworkContext context) {
         ClientLevel world = Minecraft.getInstance().level;
         if (world != null) {
             BlockPos secondPos = pos.relative(direction);

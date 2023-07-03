@@ -6,10 +6,10 @@ import mekanism.common.inventory.container.QIOItemViewerContainer;
 import mekanism.common.lib.inventory.HashedItem.UUIDAwareHashedItem;
 import mekanism.common.network.BasePacketHandler;
 import mekanism.common.network.IMekanismPacket;
+import mekanism.quilt.NetworkContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 
 //TODO - 1.19: Split this packet as it is possible for it to technically become too large and cause a crash
 // Also ideally we only would sync the hashed item for types we haven't sent a given client yet so that then
@@ -41,7 +41,7 @@ public class PacketQIOItemViewerGuiSync implements IMekanismPacket {
     }
 
     @Override
-    public void handle(NetworkEvent.Context context) {
+    public void handle(NetworkContext context) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && player.containerMenu instanceof QIOItemViewerContainer container) {
             switch (type) {

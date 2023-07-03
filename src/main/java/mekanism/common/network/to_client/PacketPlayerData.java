@@ -3,8 +3,8 @@ package mekanism.common.network.to_client;
 import java.util.UUID;
 import mekanism.common.Mekanism;
 import mekanism.common.network.IMekanismPacket;
+import mekanism.quilt.NetworkContext;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 
 public class PacketPlayerData implements IMekanismPacket {
 
@@ -31,7 +31,7 @@ public class PacketPlayerData implements IMekanismPacket {
     }
 
     @Override
-    public void handle(NetworkEvent.Context context) {
+    public void handle(NetworkContext context) {
         Mekanism.playerState.setFlamethrowerState(uuid, activeFlamethrower, false);
         Mekanism.playerState.setJetpackState(uuid, activeJetpack, false);
         Mekanism.playerState.setScubaMaskState(uuid, activeScubaMask, false);

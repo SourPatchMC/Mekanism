@@ -15,8 +15,9 @@ import mekanism.common.capabilities.resolver.ICapabilityResolver;
 import mekanism.common.tile.component.TileComponentConfig;
 import net.minecraft.core.Direction;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.Nullable;
+
+import io.github.fabricators_of_create.porting_lib.util.LazyOptional;
 
 @NothingNullByDefault
 public class CapabilityCache {

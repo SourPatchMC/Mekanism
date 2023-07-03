@@ -1,13 +1,13 @@
 package mekanism.common.config.listener;
 
-import java.util.function.Supplier;
 import mekanism.common.config.value.CachedValue;
 import mekanism.common.config.value.CachedValue.IConfigValueInvalidationListener;
-import net.minecraftforge.common.util.NonNullSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ConfigBasedCachedSupplier<VALUE> implements NonNullSupplier<VALUE>, Supplier<VALUE> {
+import io.github.fabricators_of_create.porting_lib.common.util.NonNullSupplier;
+
+public class ConfigBasedCachedSupplier<VALUE> implements NonNullSupplier<VALUE> {
 
     private final NonNullSupplier<VALUE> resolver;
     @Nullable

@@ -1,22 +1,37 @@
 package mekanism.common.network;
 
-import java.util.function.Supplier;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import me.pepperbell.simplenetworking.C2SPacket;
+import me.pepperbell.simplenetworking.S2CPacket;
+import me.pepperbell.simplenetworking.SimpleChannel;
+import mekanism.quilt.NetworkContext;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 
-public interface IMekanismPacket {
+// Quilt: glorified wrapper over C2SPacket and S2CPacket
+public interface IMekanismPacket extends C2SPacket, S2CPacket {
 
-    void handle(NetworkEvent.Context context);
+    void handle(NetworkContext context);
 
-    void encode(FriendlyByteBuf buffer);
-
-    static <PACKET extends IMekanismPacket> void handle(PACKET message, Supplier<NetworkEvent.Context> ctx) {
-        if (message != null) {
-            //Message should never be null unless something went horribly wrong decoding.
-            // In which case we don't want to try enqueuing handling it, or set the packet as handled
-            NetworkEvent.Context context = ctx.get();
-            context.enqueueWork(() -> message.handle(context));
-            context.setPacketHandled(true);
-        }
+    default void handle(MinecraftServer server, ServerPlayer player, ServerGamePacketListenerImpl listener, PacketSender responseSender, SimpleChannel channel) {
+        handle(new NetworkContext(server));
     }
+
+    @Override
+    default void handle(Minecraft client, ClientPacketListener listener, PacketSender responseSender, SimpleChannel channel) {
+        handle(new NetworkContext(client));
+    }
+
+    // Quilt: replaced with default handle methods above
+    // static <PACKET extends IMekanismPacket> void handle(PACKET message, Supplier<NetworkContext> ctx) {
+    //     if (message != null) {
+    //         //Message should never be null unless something went horribly wrong decoding.
+    //         // In which case we don't want to try enqueuing handling it, or set the packet as handled
+    //         NetworkContext context = ctx.get();
+    //         context.enqueueWork(() -> message.handle(context));
+    //     }
+    // }
 }

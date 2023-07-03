@@ -11,10 +11,11 @@ import mekanism.common.lib.transmitter.DynamicNetwork;
 import mekanism.common.lib.transmitter.TransmitterNetworkRegistry;
 import mekanism.common.network.BasePacketHandler;
 import mekanism.common.network.IMekanismPacket;
+import mekanism.quilt.NetworkContext;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
+
+import io.github.fabricators_of_create.porting_lib.util.FluidStack;
 
 public class PacketTransmitterUpdate implements IMekanismPacket {
 
@@ -51,7 +52,7 @@ public class PacketTransmitterUpdate implements IMekanismPacket {
     }
 
     @Override
-    public void handle(NetworkEvent.Context context) {
+    public void handle(NetworkContext context) {
         DynamicNetwork<?, ?, ?> clientNetwork = TransmitterNetworkRegistry.getInstance().getClientNetwork(networkID);
         if (clientNetwork != null && packetType.networkTypeMatches(clientNetwork)) {
             //Note: We set the information even if opaque transmitters is true in case the client turns the config setting off

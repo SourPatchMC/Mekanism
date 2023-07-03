@@ -1,14 +1,17 @@
 package mekanism.common.config;
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+
+import fuzs.forgeconfigapiport.api.config.v2.ForgeConfigPaths;
+
 import java.nio.file.Path;
 import java.util.function.Function;
+
+import org.quiltmc.loader.api.ModContainer;
+
 import mekanism.common.Mekanism;
-import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.config.ConfigFileTypeHandler;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
-import net.minecraftforge.fml.loading.FMLPaths;
 
 /**
  * Custom {@link ModConfig} implementation that allows for rerouting the server config from being in the world's folder to being in the normal config folder. This allows
@@ -21,8 +24,8 @@ public class MekanismModConfig extends ModConfig {
 
     private final IMekanismConfig mekanismConfig;
 
-    public MekanismModConfig(ModContainer container, IMekanismConfig config) {
-        super(config.getConfigType(), config.getConfigSpec(), container, Mekanism.MOD_NAME + "/" + config.getFileName() + ".toml");
+    public MekanismModConfig(ModContainer modContainer, IMekanismConfig config) {
+        super(config.getConfigType(), config.getConfigSpec(), modContainer.metadata().id(), Mekanism.MOD_NAME + "/" + config.getFileName() + ".toml");
         this.mekanismConfig = config;
     }
 
@@ -31,8 +34,8 @@ public class MekanismModConfig extends ModConfig {
         return MEK_TOML;
     }
 
-    public void clearCache(ModConfigEvent event) {
-        mekanismConfig.clearCache(event instanceof ModConfigEvent.Unloading);
+    public void clearCache(boolean unloading) {
+        mekanismConfig.clearCache(unloading);
     }
 
     private static class MekanismConfigFileTypeHandler extends ConfigFileTypeHandler {
@@ -40,7 +43,7 @@ public class MekanismModConfig extends ModConfig {
         private static Path getPath(Path configBasePath) {
             //Intercept server config path reading for Mekanism configs and reroute it to the normal config directory
             if (configBasePath.endsWith("serverconfig")) {
-                return FMLPaths.CONFIGDIR.get();
+                return ForgeConfigPaths.INSTANCE.getCommonConfigDirectory();
             }
             return configBasePath;
         }

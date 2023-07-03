@@ -1,3 +1,5 @@
+import java.nio.file.Path;
+
 import org.jetbrains.annotations.Nullable;
 
 import io.github.coolcrabs.brachyura.decompiler.BrachyuraDecompiler;
@@ -43,8 +45,30 @@ public class Buildscript extends SimpleQuiltProject {
 
 	@Override
 	public void getModDependencies(ModDependencyCollector d) {
-		for (MavenId id : new TransitiveDepResolveTask(QuiltMaven.URL, new MavenId(QuiltMaven.GROUP_ID + ".quilted-fabric-api", "quilted-fabric-api", versions.QUILTED_FABRIC_API.get())).get()) {
-			d.addMaven(QuiltMaven.URL, id, ModDependencyFlag.COMPILE, ModDependencyFlag.RUNTIME);
+		for (MavenIdWithRepo id : new TransitiveDepResolveTask(new String[] { QuiltMaven.URL }, new MavenId(QuiltMaven.GROUP_ID + ".quilted-fabric-api", "quilted-fabric-api", versions.QUILTED_FABRIC_API.get())).get()) {
+			d.addMaven(id.repo, id.mavenId, ModDependencyFlag.COMPILE, ModDependencyFlag.RUNTIME);
 		}
+
+		for (MavenIdWithRepo id : new TransitiveDepResolveTask(new String[] { "https://mvn.devos.one/snapshots/", "https://jitpack.io/", Maven.MAVEN_CENTRAL }, new MavenId("io.github.fabricators_of_create.Porting-Lib:Porting-Lib:2.1.999+1.20")).get()) {
+			if (id.mavenId.artifactId.equals("model_generators")) continue; // Breaks remapping
+			jij(d.addMaven(id.repo, id.mavenId, ModDependencyFlag.COMPILE, ModDependencyFlag.RUNTIME));
+		}
+
+		for (String module : new String[] {
+			"base",
+			"chunk",
+			"entity"
+		}) {
+			jij(d.addMaven("https://maven.ladysnake.org/releases/", new MavenId("dev.onyxstudios.cardinal-components-api", "cardinal-components-" + module, "5.2.1"), ModDependencyFlag.COMPILE, ModDependencyFlag.RUNTIME));
+		}
+
+		jij(d.addMaven(Maven.MAVEN_CENTRAL, new MavenId("com.electronwill.night-config:core:3.6.5"), ModDependencyFlag.COMPILE, ModDependencyFlag.RUNTIME));
+		jij(d.addMaven(Maven.MAVEN_CENTRAL, new MavenId("com.electronwill.night-config:toml:3.6.5"), ModDependencyFlag.COMPILE, ModDependencyFlag.RUNTIME));
+		jij(d.addMaven("https://raw.githubusercontent.com/Fuzss/modresources/main/maven/", new MavenId("fuzs.forgeconfigapiport:forgeconfigapiport-fabric:8.0.0"), ModDependencyFlag.COMPILE, ModDependencyFlag.RUNTIME));
+	}
+
+	@Override
+	public Path[] getSrcDirs() {
+		return new Path[]{getProjectDir().resolve("src").resolve("main").resolve("java"), getProjectDir().resolve("src").resolve("api").resolve("java")};
 	}
 }
